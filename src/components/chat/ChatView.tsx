@@ -1,0 +1,239 @@
+// ============================================================
+// Chat View — AI conversation interface
+// ============================================================
+
+import { useRef, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Send, Plus, Trash2, Loader2, User, Bot } from "lucide-react";
+import { useChatStore } from "@/stores/chatStore";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { sendChatStream, parseSSEStream } from "@/services/chatService";
+import type { ChatMessage } from "@/types";
+
+export function ChatView() {
+  const {
+    conversations,
+    activeConversationId,
+    isStreaming,
+    createConversation,
+    deleteConversation,
+    setActiveConversation,
+    addMessage,
+    appendToLastMessage,
+    setStreaming,
+    getActiveConversation,
+  } = useChatStore();
+
+  const apiKey = useSettingsStore((s) => s.apiKey);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const activeConversation = getActiveConversation();
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [activeConversation?.messages]);
+
+  const handleSend = useCallback(async () => {
+    const input = inputRef.current;
+    if (!input || !input.value.trim() || isStreaming) return;
+
+    if (!apiKey) {
+      alert("Please set your API Key in Settings first.");
+      return;
+    }
+
+    let convId = activeConversationId;
+    if (!convId) {
+      convId = createConversation();
+    }
+
+    const userText = input.value.trim();
+    input.value = "";
+
+    // Add user message
+    addMessage(convId, {
+      id: Date.now().toString(36),
+      role: "user",
+      content: userText,
+      timestamp: Date.now(),
+    });
+
+    // Add empty assistant message
+    const assistantId = Date.now().toString(36) + "_a";
+    addMessage(convId, {
+      id: assistantId,
+      role: "assistant",
+      content: "",
+      timestamp: Date.now(),
+    });
+
+    // Build messages for API
+    const conv = useChatStore.getState().conversations.find((c) => c.id === convId);
+    const apiMessages: ChatMessage[] = (conv?.messages || [])
+      .filter((m) => m.content)
+      .map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+
+    apiMessages.push({ role: "user", content: userText });
+
+    setStreaming(true);
+
+    try {
+      const response = await sendChatStream(apiMessages);
+      parseSSEStream(
+        response,
+        (chunk) => {
+          appendToLastMessage(convId!, chunk);
+        },
+        () => {
+          setStreaming(false);
+        }
+      );
+    } catch (err) {
+      appendToLastMessage(
+        convId!,
+        `\n\n**Error:** ${err instanceof Error ? err.message : "Unknown error"}`
+      );
+      setStreaming(false);
+    }
+  }, [activeConversationId, isStreaming, apiKey, createConversation, addMessage, appendToLastMessage, setStreaming]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <div className="flex h-full">
+      {/* Conversation List */}
+      <div className="w-56 border-r border-border flex flex-col">
+        <div className="p-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => createConversation()}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Chat
+          </Button>
+        </div>
+        <ScrollArea className="flex-1">
+          <div className="px-2 space-y-1">
+            {conversations.map((conv) => (
+              <div
+                key={conv.id}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm group ${
+                  conv.id === activeConversationId
+                    ? "bg-secondary"
+                    : "hover:bg-muted"
+                }`}
+                onClick={() => setActiveConversation(conv.id)}
+              >
+                <span className="flex-1 truncate">{conv.title}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    deleteConversation(conv.id);
+                  }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {activeConversation ? (
+          <>
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-4">
+              <div ref={scrollRef} className="max-w-3xl mx-auto space-y-4">
+                {activeConversation.messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex gap-3 ${
+                      msg.role === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    {msg.role === "assistant" && (
+                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                        <Bot className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                    )}
+                    <div
+                      className={`rounded-lg px-4 py-2.5 max-w-[80%] whitespace-pre-wrap text-sm ${
+                        msg.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`}
+                    >
+                      {msg.content || (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
+                    </div>
+                    {msg.role === "user" && (
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <User className="h-4 w-4" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+
+            {/* Input Area */}
+            <div className="border-t border-border p-4">
+              <div className="max-w-3xl mx-auto flex gap-2">
+                <Textarea
+                  ref={inputRef}
+                  placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+                  className="min-h-[44px] max-h-[200px] resize-none"
+                  rows={1}
+                  onKeyDown={handleKeyDown}
+                  disabled={isStreaming}
+                />
+                <Button
+                  onClick={handleSend}
+                  disabled={isStreaming}
+                  size="icon"
+                  className="shrink-0"
+                >
+                  {isStreaming ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            <div className="text-center space-y-3">
+              <Bot className="h-12 w-12 mx-auto opacity-50" />
+              <p className="text-lg">Start a new conversation</p>
+              <Badge variant="secondary">Click "New Chat" to begin</Badge>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
