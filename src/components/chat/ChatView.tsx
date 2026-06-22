@@ -32,12 +32,14 @@ export function ChatView() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeConversation = getActiveConversation();
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom only when new messages arrive (not on every stream chunk)
+  const messageCountRef = useRef(0);
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && messageCountRef.current !== (activeConversation?.messages.length ?? 0)) {
+      messageCountRef.current = activeConversation?.messages.length ?? 0;
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [activeConversation?.messages]);
+  }, [activeConversation?.messages.length]);
 
   const handleSend = useCallback(async () => {
     const input = inputRef.current;
@@ -159,11 +161,11 @@ export function ChatView() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {activeConversation ? (
           <>
             {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea className="flex-1 min-h-0 p-4">
               <div ref={scrollRef} className="max-w-3xl mx-auto space-y-4">
                 {activeConversation.messages.map((msg) => (
                   <div
@@ -199,7 +201,7 @@ export function ChatView() {
             </ScrollArea>
 
             {/* Input Area */}
-            <div className="border-t border-border p-4">
+            <div className="border-t border-border p-4 shrink-0">
               <div className="max-w-3xl mx-auto flex gap-2">
                 <Textarea
                   ref={inputRef}
