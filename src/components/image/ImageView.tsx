@@ -29,6 +29,7 @@ import {
   getDefaultDownloadDir,
   generateFilename,
 } from "@/services/downloadService";
+import { t } from "@/lib/i18n";
 import type { GeneratedImage } from "@/types";
 
 /** Input source mode for img2img */
@@ -55,6 +56,30 @@ export function ImageView() {
   } = useImageStore();
   const apiKey = useSettingsStore((s) => s.apiKey);
   const savePath = useSettingsStore((s) => s.savePath);
+
+  // Translated UI strings
+  const STR = {
+    title: t("image.title"),
+    textToImage: t("image.textToImage"),
+    imageToImage: t("image.imageToImage"),
+    describeImage: t("image.describeImage"),
+    upload: t("image.upload"),
+    urlLabel: t("image.url"),
+    clickToUpload: t("image.clickToUploadImage"),
+    formats: t("image.supportedFormats"),
+    inputImagePlaceholder: t("image.inputImagePlaceholder"),
+    sizePlaceholder: t("image.sizePlaceholder"),
+    generateImage: t("image.generateImage"),
+    generating: t("image.generating"),
+    modelInfo: t("image.modelInfo", { model: "agnes-image-2.1-flash" }),
+    autoDownloadInfo: t("image.autoDownloadInfo"),
+    generatedImages: t("image.generatedImages", { count: String(images.length) }),
+    noImagesYet: t("image.noImagesYet"),
+    pleaseUploadImage: t("image.pleaseUploadImage"),
+    pleaseSetApiKeyFirst: t("chat.pleaseSetApiKeyFirst"),
+    imageGenerationFailed: t("image.imageGenerationFailed"),
+    saved: t("common.saved"),
+  };
 
   const [prompt, setPrompt] = useState("");
   const [size, setSize] = useState("1024x768");
@@ -118,11 +143,11 @@ export function ImageView() {
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) return;
     if (!apiKey) {
-      alert("Please set your API Key in Settings first.");
+      alert(STR.pleaseSetApiKeyFirst);
       return;
     }
     if (mode === "img2img" && !getInputSource()) {
-      alert("Please upload an image or provide an image URL.");
+      alert(STR.pleaseUploadImage);
       return;
     }
 
@@ -165,7 +190,7 @@ export function ImageView() {
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Image generation failed"
+        err instanceof Error ? err.message : STR.imageGenerationFailed
       );
     } finally {
       setGenerating(false);
@@ -181,6 +206,9 @@ export function ImageView() {
     addImage,
     updateImageLocalPath,
     setError,
+    STR.imageGenerationFailed,
+    STR.pleaseSetApiKeyFirst,
+    STR.pleaseUploadImage,
   ]);
 
   return (
@@ -189,7 +217,7 @@ export function ImageView() {
       <div className="w-96 border-r border-border p-4 flex flex-col gap-4 overflow-y-auto">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <ImageIcon className="h-5 w-5" />
-          Image Generation
+          {STR.title}
         </h2>
 
         <Tabs
@@ -198,16 +226,16 @@ export function ImageView() {
         >
           <TabsList className="w-full">
             <TabsTrigger value="text2img" className="flex-1">
-              <Sparkles className="h-4 w-4 mr-1" /> Text → Image
+              <Sparkles className="h-4 w-4 mr-1" /> {STR.textToImage}
             </TabsTrigger>
             <TabsTrigger value="img2img" className="flex-1">
-              <ArrowRightLeft className="h-4 w-4 mr-1" /> Image → Image
+              <ArrowRightLeft className="h-4 w-4 mr-1" /> {STR.imageToImage}
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
         <Textarea
-          placeholder="Describe the image you want to generate..."
+          placeholder={STR.describeImage}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           className="min-h-[120px]"
@@ -224,7 +252,7 @@ export function ImageView() {
                 className="flex-1"
                 onClick={() => setInputMode("upload")}
               >
-                <Upload className="h-4 w-4 mr-1" /> Upload
+                <Upload className="h-4 w-4 mr-1" /> {STR.upload}
               </Button>
               <Button
                 variant={inputMode === "url" ? "default" : "outline"}
@@ -232,7 +260,7 @@ export function ImageView() {
                 className="flex-1"
                 onClick={() => setInputMode("url")}
               >
-                <Link className="h-4 w-4 mr-1" /> URL
+                <Link className="h-4 w-4 mr-1" /> {STR.urlLabel}
               </Button>
             </div>
 
@@ -278,10 +306,10 @@ export function ImageView() {
                   >
                     <Upload className="h-8 w-8" />
                     <span className="text-sm font-medium">
-                      Click to upload image
+                      {STR.clickToUpload}
                     </span>
                     <span className="text-xs">
-                      PNG, JPG, WebP (max 20MB)
+                      {STR.formats}
                     </span>
                   </button>
                 )}
@@ -291,7 +319,7 @@ export function ImageView() {
             {/* URL mode */}
             {inputMode === "url" && (
               <Input
-                placeholder="Input image URL (public accessible)"
+                placeholder={STR.inputImagePlaceholder}
                 value={inputImageUrl}
                 onChange={(e) => setInputImageUrl(e.target.value)}
               />
@@ -301,7 +329,7 @@ export function ImageView() {
 
         <div className="flex gap-2">
           <Input
-            placeholder="Size (e.g. 1024x768)"
+            placeholder={STR.sizePlaceholder}
             value={size}
             onChange={(e) => setSize(e.target.value)}
             className="flex-1"
@@ -315,33 +343,31 @@ export function ImageView() {
         >
           {isGenerating ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> {STR.generating}
             </>
           ) : (
             <>
-              <Sparkles className="h-4 w-4 mr-2" /> Generate Image
+              <Sparkles className="h-4 w-4 mr-2" /> {STR.generateImage}
             </>
           )}
         </Button>
 
         <div className="text-xs text-muted-foreground space-y-1">
-          <p>
-            Model: <Badge variant="secondary">agnes-image-2.1-flash</Badge>
-          </p>
-          <p>Images are automatically downloaded to local disk.</p>
+          <p>{STR.modelInfo}</p>
+          <p>{STR.autoDownloadInfo}</p>
         </div>
       </div>
 
       {/* Right: Results */}
       <div className="flex-1 p-4 overflow-y-auto">
         <h3 className="text-sm font-medium text-muted-foreground mb-3">
-          Generated Images ({images.length})
+          {STR.generatedImages}
         </h3>
         {images.length === 0 ? (
           <div className="flex items-center justify-center h-64 text-muted-foreground">
             <div className="text-center">
               <ImageIcon className="h-12 w-12 mx-auto opacity-50 mb-3" />
-              <p>No images generated yet</p>
+              <p>{STR.noImagesYet}</p>
             </div>
           </div>
         ) : (
@@ -375,7 +401,7 @@ export function ImageView() {
                     </Badge>
                     {img.localPath && (
                       <span className="text-xs text-green-600 flex items-center gap-1">
-                        <Download className="h-3 w-3" /> Saved
+                        <Download className="h-3 w-3" /> {STR.saved}
                       </span>
                     )}
                   </div>

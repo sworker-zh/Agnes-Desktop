@@ -11,6 +11,7 @@ import { Send, Plus, Trash2, Loader2, User, Bot } from "lucide-react";
 import { useChatStore } from "@/stores/chatStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { sendChatStream, parseSSEStream } from "@/services/chatService";
+import { t } from "@/lib/i18n";
 import type { ChatMessage } from "@/types";
 
 export function ChatView() {
@@ -32,6 +33,15 @@ export function ChatView() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeConversation = getActiveConversation();
 
+  // Translated UI strings
+  const STR = {
+    newChat: t("chat.newChat"),
+    startNewConversation: t("chat.startNewConversation"),
+    clickNewChatBegin: t("chat.clickNewChatBegin"),
+    typeAMessage: t("chat.typeAMessage"),
+    pleaseSetApiKeyFirst: t("chat.pleaseSetApiKeyFirst"),
+  };
+
   // Auto-scroll to bottom only when new messages arrive (not on every stream chunk)
   const messageCountRef = useRef(0);
   useEffect(() => {
@@ -46,7 +56,7 @@ export function ChatView() {
     if (!input || !input.value.trim() || isStreaming) return;
 
     if (!apiKey) {
-      alert("Please set your API Key in Settings first.");
+      alert(STR.pleaseSetApiKeyFirst);
       return;
     }
 
@@ -106,7 +116,7 @@ export function ChatView() {
       );
       setStreaming(false);
     }
-  }, [activeConversationId, isStreaming, apiKey, createConversation, addMessage, appendToLastMessage, setStreaming]);
+  }, [activeConversationId, isStreaming, apiKey, createConversation, addMessage, appendToLastMessage, setStreaming, STR.pleaseSetApiKeyFirst]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -127,7 +137,7 @@ export function ChatView() {
             onClick={() => createConversation()}
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Chat
+            {STR.newChat}
           </Button>
         </div>
         <ScrollArea className="flex-1">
@@ -205,7 +215,7 @@ export function ChatView() {
               <div className="max-w-3xl mx-auto flex gap-2">
                 <Textarea
                   ref={inputRef}
-                  placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+                  placeholder={STR.typeAMessage}
                   className="min-h-[44px] max-h-[200px] resize-none"
                   rows={1}
                   onKeyDown={handleKeyDown}
@@ -230,8 +240,8 @@ export function ChatView() {
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             <div className="text-center space-y-3">
               <Bot className="h-12 w-12 mx-auto opacity-50" />
-              <p className="text-lg">Start a new conversation</p>
-              <Badge variant="secondary">Click "New Chat" to begin</Badge>
+              <p className="text-lg">{STR.startNewConversation}</p>
+              <Badge variant="secondary">{STR.clickNewChatBegin}</Badge>
             </div>
           </div>
         )}

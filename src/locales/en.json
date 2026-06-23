@@ -1,0 +1,82 @@
+{
+  "nav": {
+    "chat": "Chat",
+    "image": "Image",
+    "video": "Video",
+    "settings": "Settings"
+  },
+  "layout": {
+    "appName": "Agnes AI Tool"
+  },
+  "chat": {
+    "newChat": "New Chat",
+    "startNewConversation": "Start a new conversation",
+    "clickNewChatBegin": "Click \"New Chat\" to begin",
+    "typeAMessage": "Type a message... (Enter to send, Shift+Enter for new line)",
+    "pleaseSetApiKeyFirst": "Please set your API Key in Settings first."
+  },
+  "image": {
+    "title": "Image Generation",
+    "textToImage": "Text → Image",
+    "imageToImage": "Image → Image",
+    "describeImage": "Describe the image you want to generate...",
+    "upload": "Upload",
+    "url": "URL",
+    "clickToUploadImage": "Click to upload image",
+    "supportedFormats": "PNG, JPG, WebP (max 20MB)",
+    "inputImagePlaceholder": "Input image URL (public accessible)",
+    "sizePlaceholder": "Size (e.g. 1024x768)",
+    "generateImage": "Generate Image",
+    "generating": "Generating...",
+    "modelInfo": "Model: {{model}}",
+    "autoDownloadInfo": "Images are automatically downloaded to local disk.",
+    "generatedImages": "Generated Images ({{count}})",
+    "noImagesYet": "No images generated yet",
+    "pleaseUploadImage": "Please upload an image or provide an image URL.",
+    "imageGenerationFailed": "Image generation failed"
+  },
+  "video": {
+    "title": "Video Generation",
+    "describeVideo": "Describe the video you want to generate...",
+    "imagePlaceholder": "Image URL (optional, for image-to-video)",
+    "duration": "Duration",
+    "generateVideo": "Generate Video",
+    "creatingTask": "Creating task...",
+    "modelInfo": "Model: {{model}}",
+    "asyncInfo": "Video generation is asynchronous. Results will auto-download when ready.",
+    "videoTasks": "Video Tasks ({{count}})",
+    "noVideoTasksYet": "No video tasks yet",
+    "pleaseSetApiKeyFirst": "Please set your API Key in Settings first.",
+    "videoCreationFailed": "Video creation failed"
+  },
+  "settings": {
+    "title": "Settings",
+    "apiKey": "API Key",
+    "apiKeyDesc": "Your Agnes AI API Key. Get one from the {{link}}.",
+    "apiKeyConsole": "Agnes AI Console",
+    "save": "Save",
+    "keyConfigured": "Key configured",
+    "downloadPath": "Download Path",
+    "downloadPathDesc": "Generated images and videos will be saved to this directory.",
+    "downloadPathPlaceholder": "Leave empty for default (~/Downloads/AgnesAI)",
+    "default": "Default",
+    "failedToGetDefaultDir": "Failed to get default download directory.",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "language": "Language",
+    "english": "English",
+    "chinese": "中文",
+    "about": "About",
+    "poweredBy": "Powered by {{link}}",
+    "agnesAiLink": "Agnes AI",
+    "models": "Models: {{models}}"
+  },
+  "common": {
+    "saved": "Saved",
+    "completed": "Completed",
+    "failed": "Failed",
+    "inProgress": "In Progress",
+    "queued": "Queued"
+  }
+}

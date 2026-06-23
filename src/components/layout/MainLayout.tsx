@@ -2,7 +2,7 @@
 // Main Layout — Sidebar + Content area
 // ============================================================
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -14,6 +14,8 @@ import {
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { t, type TranslationKey } from "@/lib/i18n";
 
 export type PageKey = "chat" | "image" | "video" | "settings";
 
@@ -23,15 +25,23 @@ interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems: { key: PageKey; label: string; icon: React.ReactNode }[] = [
-  { key: "chat", label: "Chat", icon: <MessageSquare className="h-5 w-5" /> },
-  { key: "image", label: "Image", icon: <Image className="h-5 w-5" /> },
-  { key: "video", label: "Video", icon: <Video className="h-5 w-5" /> },
-  { key: "settings", label: "Settings", icon: <Settings className="h-5 w-5" /> },
+const navItems: { key: PageKey; labelKey: TranslationKey; icon: React.ReactNode }[] = [
+  { key: "chat", labelKey: "nav.chat", icon: <MessageSquare className="h-5 w-5" /> },
+  { key: "image", labelKey: "nav.image", icon: <Image className="h-5 w-5" /> },
+  { key: "video", labelKey: "nav.video", icon: <Video className="h-5 w-5" /> },
+  { key: "settings", labelKey: "nav.settings", icon: <Settings className="h-5 w-5" /> },
 ];
 
 export function MainLayout({ activePage, onNavigate, children }: MainLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const language = useSettingsStore((s) => s.language);
+  // `t()` resolves from a module-level current lang (set by setLanguage());
+  // `language` is an intentional proxy dep so labels re-translate on switch.
+  const navLabels = useMemo(
+    () => navItems.map((item) => t(item.labelKey)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [language]
+  );
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -54,7 +64,7 @@ export function MainLayout({ activePage, onNavigate, children }: MainLayoutProps
 
         {/* Nav Items */}
         <nav className="flex-1 p-2 space-y-1">
-          {navItems.map((item) => (
+          {navItems.map((item, idx) => (
             <Button
               key={item.key}
               variant={activePage === item.key ? "secondary" : "ghost"}
@@ -65,7 +75,7 @@ export function MainLayout({ activePage, onNavigate, children }: MainLayoutProps
               onClick={() => onNavigate(item.key)}
             >
               {item.icon}
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && <span>{navLabels[idx] || item.labelKey}</span>}
             </Button>
           ))}
         </nav>

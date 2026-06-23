@@ -1,5 +1,5 @@
 // ============================================================
-// Settings View — API Key, Save Path, Theme
+// Settings View — API Key, Save Path, Theme, Language
 // ============================================================
 
 import { useState, useEffect } from "react";
@@ -8,13 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Key, FolderOpen, Sun, Moon, Save, Check } from "lucide-react";
+import { Key, FolderOpen, Sun, Moon, Languages, Save, Check } from "lucide-react";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { getDefaultDownloadDir } from "@/services/downloadService";
+import { t } from "@/lib/i18n";
 
 export function SettingsView() {
-  const { apiKey, savePath, theme, setApiKey, setSavePath, setTheme, loadSettings } =
-    useSettingsStore();
+  const {
+    apiKey,
+    savePath,
+    theme,
+    language,
+    setApiKey,
+    setSavePath,
+    setTheme,
+    setLanguage,
+    loadSettings,
+  } = useSettingsStore();
 
   const [keyInput, setKeyInput] = useState(apiKey);
   const [saved, setSaved] = useState(false);
@@ -22,6 +32,38 @@ export function SettingsView() {
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  // Translated UI strings
+  const STR = {
+    title: t("settings.title"),
+    apiKey: t("settings.apiKey"),
+    apiKeyDesc: t("settings.apiKeyDesc"),
+    apiKeyConsole: t("settings.apiKeyConsole"),
+    save: t("settings.save"),
+    keyConfigured: t("settings.keyConfigured"),
+    downloadPath: t("settings.downloadPath"),
+    downloadPathDesc: t("settings.downloadPathDesc"),
+    downloadPathPlaceholder: t("settings.downloadPathPlaceholder"),
+    default: t("settings.default"),
+    failedToGetDefaultDir: t("settings.failedToGetDefaultDir"),
+    theme: t("settings.theme"),
+    light: t("settings.light"),
+    dark: t("settings.dark"),
+    language: t("settings.language"),
+    english: t("settings.english"),
+    chinese: t("settings.chinese"),
+    about: t("settings.about"),
+    appName: t("layout.appName"),
+    poweredBy: t("settings.poweredBy"),
+    agnesAiLink: t("settings.agnesAiLink"),
+    modelsLabel: t("settings.models"),
+    saved: t("common.saved"),
+  };
+  // Description strings embed an inline link/model placeholder; split around it
+  // so the `<a>` / `<Badge>` elements stay clickable/styled.
+  const [apiKeyDescBefore, apiKeyDescAfter] = STR.apiKeyDesc.split("{{link}}");
+  const [poweredByBefore, poweredByAfter] = STR.poweredBy.split("{{link}}");
+  const [modelsBefore] = STR.modelsLabel.split("{{models}}");
 
   const handleSaveKey = () => {
     setApiKey(keyInput);
@@ -34,34 +76,34 @@ export function SettingsView() {
       const dir = await getDefaultDownloadDir();
       setSavePath(dir);
     } catch {
-      alert("Failed to get default download directory.");
+      alert(STR.failedToGetDefaultDir);
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <h2 className="text-xl font-semibold">Settings</h2>
+      <h2 className="text-xl font-semibold">{STR.title}</h2>
 
       {/* API Key */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Key className="h-4 w-4" />
-            API Key
+            {STR.apiKey}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Your Agnes AI API Key. Get one from the{" "}
+            {apiKeyDescBefore}
             <a
               href="https://agnes-ai.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary underline"
             >
-              Agnes AI Console
+              {STR.apiKeyConsole}
             </a>
-            .
+            {apiKeyDescAfter}
           </p>
           <div className="flex gap-2">
             <Input
@@ -77,12 +119,12 @@ export function SettingsView() {
               ) : (
                 <Save className="h-4 w-4 mr-1" />
               )}
-              Save
+              {STR.save}
             </Button>
           </div>
           {apiKey && (
             <Badge variant="secondary" className="text-xs">
-              Key configured
+              {STR.keyConfigured}
             </Badge>
           )}
         </CardContent>
@@ -93,22 +135,22 @@ export function SettingsView() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <FolderOpen className="h-4 w-4" />
-            Download Path
+            {STR.downloadPath}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Generated images and videos will be saved to this directory.
+            {STR.downloadPathDesc}
           </p>
           <div className="flex gap-2">
             <Input
-              placeholder="Leave empty for default (~/Downloads/AgnesAI)"
+              placeholder={STR.downloadPathPlaceholder}
               value={savePath}
               onChange={(e) => setSavePath(e.target.value)}
               className="flex-1"
             />
             <Button variant="outline" onClick={handlePickDefaultDir}>
-              Default
+              {STR.default}
             </Button>
           </div>
         </CardContent>
@@ -125,7 +167,7 @@ export function SettingsView() {
             ) : (
               <Sun className="h-4 w-4" />
             )}
-            Theme
+            {STR.theme}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -134,13 +176,39 @@ export function SettingsView() {
               variant={theme === "light" ? "default" : "outline"}
               onClick={() => setTheme("light")}
             >
-              <Sun className="h-4 w-4 mr-2" /> Light
+              <Sun className="h-4 w-4 mr-2" /> {STR.light}
             </Button>
             <Button
               variant={theme === "dark" ? "default" : "outline"}
               onClick={() => setTheme("dark")}
             >
-              <Moon className="h-4 w-4 mr-2" /> Dark
+              <Moon className="h-4 w-4 mr-2" /> {STR.dark}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Language */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Languages className="h-4 w-4" />
+            {STR.language}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Button
+              variant={language === "en" ? "default" : "outline"}
+              onClick={() => setLanguage("en")}
+            >
+              {STR.english}
+            </Button>
+            <Button
+              variant={language === "zh" ? "default" : "outline"}
+              onClick={() => setLanguage("zh")}
+            >
+              {STR.chinese}
             </Button>
           </div>
         </CardContent>
@@ -149,23 +217,25 @@ export function SettingsView() {
       {/* Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">About</CardTitle>
+          <CardTitle className="text-base">{STR.about}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-1">
-          <p>Agnes AI Tool v0.1.0</p>
+          <p>{STR.appName} v0.1.0</p>
           <p>
-            Powered by{" "}
+            {poweredByBefore}
             <a
               href="https://agnes-ai.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary underline"
             >
-              Agnes AI API
+              {STR.agnesAiLink}
             </a>
+            {poweredByAfter}
           </p>
           <p>
-            Models: <Badge variant="secondary">agnes-2.0-flash</Badge>{" "}
+            {modelsBefore}
+            <Badge variant="secondary">agnes-2.0-flash</Badge>{" "}
             <Badge variant="secondary">agnes-image-2.1-flash</Badge>{" "}
             <Badge variant="secondary">agnes-video-v2.0</Badge>
           </p>

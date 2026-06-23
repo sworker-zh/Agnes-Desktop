@@ -26,6 +26,7 @@ import {
   pollVideoResult,
 } from "@/services/videoService";
 import { downloadFile, getDefaultDownloadDir, generateFilename } from "@/services/downloadService";
+import { t } from "@/lib/i18n";
 
 const DURATION_PRESETS = [
   { label: "~3s", num_frames: 81, frame_rate: 24 },
@@ -48,6 +49,29 @@ export function VideoView() {
   const apiKey = useSettingsStore((s) => s.apiKey);
   const savePath = useSettingsStore((s) => s.savePath);
 
+  // Translated UI strings
+  const STR = {
+    title: t("video.title"),
+    describeVideo: t("video.describeVideo"),
+    imagePlaceholder: t("video.imagePlaceholder"),
+    duration: t("video.duration"),
+    generateVideo: t("video.generateVideo"),
+    creatingTask: t("video.creatingTask"),
+    modelInfo: t("video.modelInfo", { model: "agnes-video-v2.0" }),
+    asyncInfo: t("video.asyncInfo"),
+    videoTasks: t("video.videoTasks", { count: String(videos.length) }),
+    noVideoTasksYet: t("video.noVideoTasksYet"),
+    pleaseSetApiKeyFirst: t("video.pleaseSetApiKeyFirst"),
+    videoCreationFailed: t("video.videoCreationFailed"),
+    saved: t("common.saved"),
+  };
+  const STATUS_LABEL: Record<string, string> = {
+    completed: t("common.completed"),
+    failed: t("common.failed"),
+    in_progress: t("common.inProgress"),
+    queued: t("common.queued"),
+  };
+
   const [prompt, setPrompt] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [durationIdx, setDurationIdx] = useState(1); // default ~5s
@@ -56,7 +80,7 @@ export function VideoView() {
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) return;
     if (!apiKey) {
-      alert("Please set your API Key in Settings first.");
+      alert(STR.pleaseSetApiKeyFirst);
       return;
     }
 
@@ -123,7 +147,7 @@ export function VideoView() {
 
       stopPollRef.current = stopPoll;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Video creation failed");
+      setError(err instanceof Error ? err.message : STR.videoCreationFailed);
       setCreating(false);
     }
   }, [
@@ -138,6 +162,8 @@ export function VideoView() {
     completeVideo,
     failVideo,
     setError,
+    STR.pleaseSetApiKeyFirst,
+    STR.videoCreationFailed,
   ]);
 
   const statusIcon = (status: string) => {
@@ -159,24 +185,24 @@ export function VideoView() {
       <div className="w-96 border-r border-border p-4 flex flex-col gap-4 overflow-y-auto">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <VideoIcon className="h-5 w-5" />
-          Video Generation
+          {STR.title}
         </h2>
 
         <Textarea
-          placeholder="Describe the video you want to generate..."
+          placeholder={STR.describeVideo}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           className="min-h-[120px]"
         />
 
         <Input
-          placeholder="Image URL (optional, for image-to-video)"
+          placeholder={STR.imagePlaceholder}
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
         />
 
         <div>
-          <p className="text-xs text-muted-foreground mb-2">Duration</p>
+          <p className="text-xs text-muted-foreground mb-2">{STR.duration}</p>
           <div className="flex gap-2">
             {DURATION_PRESETS.map((preset, i) => (
               <Button
@@ -194,31 +220,31 @@ export function VideoView() {
         <Button onClick={handleGenerate} disabled={isCreating} className="w-full">
           {isCreating ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating task...
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> {STR.creatingTask}
             </>
           ) : (
             <>
-              <Film className="h-4 w-4 mr-2" /> Generate Video
+              <Film className="h-4 w-4 mr-2" /> {STR.generateVideo}
             </>
           )}
         </Button>
 
         <div className="text-xs text-muted-foreground space-y-1">
-          <p>Model: <Badge variant="secondary">agnes-video-v2.0</Badge></p>
-          <p>Video generation is asynchronous. Results will auto-download when ready.</p>
+          <p>{STR.modelInfo}</p>
+          <p>{STR.asyncInfo}</p>
         </div>
       </div>
 
       {/* Right: Task List */}
       <div className="flex-1 p-4 overflow-y-auto">
         <h3 className="text-sm font-medium text-muted-foreground mb-3">
-          Video Tasks ({videos.length})
+          {STR.videoTasks}
         </h3>
         {videos.length === 0 ? (
           <div className="flex items-center justify-center h-64 text-muted-foreground">
             <div className="text-center">
               <VideoIcon className="h-12 w-12 mx-auto opacity-50 mb-3" />
-              <p>No video tasks yet</p>
+              <p>{STR.noVideoTasksYet}</p>
             </div>
           </div>
         ) : (
@@ -233,7 +259,7 @@ export function VideoView() {
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         {statusIcon(vid.status)}
-                        <span className="text-xs capitalize">{vid.status}</span>
+                        <span className="text-xs">{STATUS_LABEL[vid.status] ?? vid.status}</span>
                         <Badge variant="secondary" className="text-xs">
                           {vid.size}
                         </Badge>
@@ -255,7 +281,7 @@ export function VideoView() {
                     <div className="shrink-0">
                       {vid.localPath && (
                         <span className="text-xs text-green-600 flex items-center gap-1">
-                          <Download className="h-3 w-3" /> Saved
+                          <Download className="h-3 w-3" /> {STR.saved}
                         </span>
                       )}
                     </div>
