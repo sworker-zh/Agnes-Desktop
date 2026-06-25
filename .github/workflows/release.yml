@@ -1,0 +1,83 @@
+# ============================================================
+# Release — 打 tag (v*) 时自动在 Windows / Ubuntu / macOS 上
+#           编译，并把各平台安装包发布到 GitHub Release。
+#
+# 触发：git tag v0.1.0 && git push origin v0.1.0
+# 产物：Windows .msi/.exe · Ubuntu .deb/.AppImage/.rpm · macOS .dmg
+#
+# 暂未启用代码签名：Windows 会弹 SmartScreen、macOS 会弹
+# "无法验证开发者"，用户右键打开或 xattr -d 即可运行。
+# 后续签名见同目录签名说明（Apple/Windows 证书走 secrets）。
+# ============================================================
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# 同一 tag 重复推送时取消旧的、跑新的
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    permissions:
+      contents: write # tauri-action 需要此权限来创建/更新 Release
+    strategy:
+      fail-fast: false # 某个平台失败不连累其他平台
+      matrix:
+        include:
+          # macOS：Intel + Apple Silicon 各编译一次，产出按架构命名的 .dmg
+          - platform: macos-latest
+            args: "--target aarch64-apple-darwin"
+          - platform: macos-latest
+            args: "--target x86_64-apple-darwin"
+          # 用 22.04 而非 latest，保证产物能在更旧的 glibc 上运行
+          - platform: ubuntu-22.04
+            args: ""
+          - platform: windows-latest
+            args: ""
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # macOS 交叉编译需要两个 target；其它平台留空即可
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Cache cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Linux dependencies (webkit2gtk-4.1 等)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build & publish to GitHub Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 自动提供，无需手动配置
+        with:
+          tagName: ${{ github.ref_name }} # 即推送的 tag，如 v0.1.0
+          releaseName: "Agnes AI Tool ${{ github.ref_name }}"
+          releaseBody: "自动构建发布。请在下方 Assets 中选择对应平台的安装包下载。"
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}

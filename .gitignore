@@ -29,3 +29,6 @@ src-tauri/target/
 # Environment
 .env
 .env.local
+
+# Claude Code (local per-user settings — do not commit)
+.claude/settings.local.json

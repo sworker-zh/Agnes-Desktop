@@ -2,7 +2,7 @@
 // Settings View — API Key, Save Path, Theme, Language
 // ============================================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,32 +33,35 @@ export function SettingsView() {
     loadSettings();
   }, [loadSettings]);
 
-  // Translated UI strings
-  const STR = {
-    title: t("settings.title"),
-    apiKey: t("settings.apiKey"),
-    apiKeyDesc: t("settings.apiKeyDesc"),
-    apiKeyConsole: t("settings.apiKeyConsole"),
-    save: t("settings.save"),
-    keyConfigured: t("settings.keyConfigured"),
-    downloadPath: t("settings.downloadPath"),
-    downloadPathDesc: t("settings.downloadPathDesc"),
-    downloadPathPlaceholder: t("settings.downloadPathPlaceholder"),
-    default: t("settings.default"),
-    failedToGetDefaultDir: t("settings.failedToGetDefaultDir"),
-    theme: t("settings.theme"),
-    light: t("settings.light"),
-    dark: t("settings.dark"),
-    language: t("settings.language"),
-    english: t("settings.english"),
-    chinese: t("settings.chinese"),
-    about: t("settings.about"),
-    appName: t("layout.appName"),
-    poweredBy: t("settings.poweredBy"),
-    agnesAiLink: t("settings.agnesAiLink"),
-    modelsLabel: t("settings.models"),
-    saved: t("common.saved"),
-  };
+  // Translated UI strings — memoized to avoid recreating on every render
+  const STR = useMemo(
+    () => ({
+      title: t("settings.title"),
+      apiKey: t("settings.apiKey"),
+      apiKeyDesc: t("settings.apiKeyDesc"),
+      apiKeyConsole: t("settings.apiKeyConsole"),
+      save: t("settings.save"),
+      keyConfigured: t("settings.keyConfigured"),
+      downloadPath: t("settings.downloadPath"),
+      downloadPathDesc: t("settings.downloadPathDesc"),
+      downloadPathPlaceholder: t("settings.downloadPathPlaceholder"),
+      default: t("settings.default"),
+      failedToGetDefaultDir: t("settings.failedToGetDefaultDir"),
+      theme: t("settings.theme"),
+      light: t("settings.light"),
+      dark: t("settings.dark"),
+      language: t("settings.language"),
+      english: t("settings.english"),
+      chinese: t("settings.chinese"),
+      about: t("settings.about"),
+      appName: t("layout.appName"),
+      poweredBy: t("settings.poweredBy"),
+      agnesAiLink: t("settings.agnesAiLink"),
+      modelsLabel: t("settings.models"),
+      saved: t("common.saved"),
+    }),
+    []
+  );
   // Description strings embed an inline link/model placeholder; split around it
   // so the `<a>` / `<Badge>` elements stay clickable/styled.
   const [apiKeyDescBefore, apiKeyDescAfter] = STR.apiKeyDesc.split("{{link}}");

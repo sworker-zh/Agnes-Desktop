@@ -13,6 +13,7 @@ name = "agnes-ai-tool"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
+ "dirs",
  "log",
  "reqwest 0.12.28",
  "serde",

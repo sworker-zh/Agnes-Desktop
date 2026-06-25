@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ErrorBoundary } from "@/lib/error-boundary";
 import { MainLayout, type PageKey } from "@/components/layout/MainLayout";
 import { ChatView } from "@/components/chat/ChatView";
 import { ImageView } from "@/components/image/ImageView";
@@ -17,12 +18,14 @@ function App() {
   }, [loadSettings]);
 
   return (
-    <MainLayout activePage={activePage} onNavigate={setActivePage}>
-      {activePage === "chat" && <ChatView />}
-      {activePage === "image" && <ImageView />}
-      {activePage === "video" && <VideoView />}
-      {activePage === "settings" && <SettingsView />}
-    </MainLayout>
+    <ErrorBoundary>
+      <MainLayout activePage={activePage} onNavigate={setActivePage}>
+        {activePage === "chat" && <ChatView />}
+        {activePage === "image" && <ImageView />}
+        {activePage === "video" && <VideoView />}
+        {activePage === "settings" && <SettingsView />}
+      </MainLayout>
+    </ErrorBoundary>
   );
 }
 

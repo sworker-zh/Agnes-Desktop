@@ -3,7 +3,7 @@
 // Supports: local file upload, URL input for img2img
 // ============================================================
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,29 +57,32 @@ export function ImageView() {
   const apiKey = useSettingsStore((s) => s.apiKey);
   const savePath = useSettingsStore((s) => s.savePath);
 
-  // Translated UI strings
-  const STR = {
-    title: t("image.title"),
-    textToImage: t("image.textToImage"),
-    imageToImage: t("image.imageToImage"),
-    describeImage: t("image.describeImage"),
-    upload: t("image.upload"),
-    urlLabel: t("image.url"),
-    clickToUpload: t("image.clickToUploadImage"),
-    formats: t("image.supportedFormats"),
-    inputImagePlaceholder: t("image.inputImagePlaceholder"),
-    sizePlaceholder: t("image.sizePlaceholder"),
-    generateImage: t("image.generateImage"),
-    generating: t("image.generating"),
-    modelInfo: t("image.modelInfo", { model: "agnes-image-2.1-flash" }),
-    autoDownloadInfo: t("image.autoDownloadInfo"),
-    generatedImages: t("image.generatedImages", { count: String(images.length) }),
-    noImagesYet: t("image.noImagesYet"),
-    pleaseUploadImage: t("image.pleaseUploadImage"),
-    pleaseSetApiKeyFirst: t("chat.pleaseSetApiKeyFirst"),
-    imageGenerationFailed: t("image.imageGenerationFailed"),
-    saved: t("common.saved"),
-  };
+  // Translated UI strings — memoized to avoid recreating on every render
+  const STR = useMemo(
+    () => ({
+      title: t("image.title"),
+      textToImage: t("image.textToImage"),
+      imageToImage: t("image.imageToImage"),
+      describeImage: t("image.describeImage"),
+      upload: t("image.upload"),
+      urlLabel: t("image.url"),
+      clickToUpload: t("image.clickToUploadImage"),
+      formats: t("image.supportedFormats"),
+      inputImagePlaceholder: t("image.inputImagePlaceholder"),
+      sizePlaceholder: t("image.sizePlaceholder"),
+      generateImage: t("image.generateImage"),
+      generating: t("image.generating"),
+      modelInfo: t("image.modelInfo", { model: "agnes-image-2.1-flash" }),
+      autoDownloadInfo: t("image.autoDownloadInfo"),
+      generatedImages: t("image.generatedImages", { count: String(images.length) }),
+      noImagesYet: t("image.noImagesYet"),
+      pleaseUploadImage: t("image.pleaseUploadImage"),
+      pleaseSetApiKeyFirst: t("chat.pleaseSetApiKeyFirst"),
+      imageGenerationFailed: t("image.imageGenerationFailed"),
+      saved: t("common.saved"),
+    }),
+    [images.length]
+  );
 
   const [prompt, setPrompt] = useState("");
   const [size, setSize] = useState("1024x768");

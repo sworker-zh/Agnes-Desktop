@@ -2,12 +2,12 @@
 // Chat View — AI conversation interface
 // ============================================================
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Send, Plus, Trash2, Loader2, User, Bot } from "lucide-react";
+import { Send, Plus, Trash2, Loader2, User, Bot, Square } from "lucide-react";
 import { useChatStore } from "@/stores/chatStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { sendChatStream, parseSSEStream } from "@/services/chatService";
@@ -25,6 +25,8 @@ export function ChatView() {
     addMessage,
     appendToLastMessage,
     setStreaming,
+    setAbortController,
+    stopStreaming,
     getActiveConversation,
   } = useChatStore();
 
@@ -33,14 +35,17 @@ export function ChatView() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeConversation = getActiveConversation();
 
-  // Translated UI strings
-  const STR = {
-    newChat: t("chat.newChat"),
-    startNewConversation: t("chat.startNewConversation"),
-    clickNewChatBegin: t("chat.clickNewChatBegin"),
-    typeAMessage: t("chat.typeAMessage"),
-    pleaseSetApiKeyFirst: t("chat.pleaseSetApiKeyFirst"),
-  };
+  // Translated UI strings — memoized to avoid recreating on every render
+  const STR = useMemo(
+    () => ({
+      newChat: t("chat.newChat"),
+      startNewConversation: t("chat.startNewConversation"),
+      clickNewChatBegin: t("chat.clickNewChatBegin"),
+      typeAMessage: t("chat.typeAMessage"),
+      pleaseSetApiKeyFirst: t("chat.pleaseSetApiKeyFirst"),
+    }),
+    []
+  );
 
   // Auto-scroll to bottom only when new messages arrive (not on every stream chunk)
   const messageCountRef = useRef(0);
@@ -50,6 +55,10 @@ export function ChatView() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [activeConversation?.messages.length]);
+
+  const handleStop = useCallback(() => {
+    stopStreaming();
+  }, [stopStreaming]);
 
   const handleSend = useCallback(async () => {
     const input = inputRef.current;
@@ -99,7 +108,12 @@ export function ChatView() {
     setStreaming(true);
 
     try {
-      const response = await sendChatStream(apiMessages);
+      const controller = new AbortController();
+      setAbortController(controller);
+
+      const response = await sendChatStream(apiMessages, {
+        signal: controller.signal,
+      });
       parseSSEStream(
         response,
         (chunk) => {
@@ -107,16 +121,24 @@ export function ChatView() {
         },
         () => {
           setStreaming(false);
+          setAbortController(null);
         }
       );
     } catch (err) {
-      appendToLastMessage(
-        convId!,
-        `\n\n**Error:** ${err instanceof Error ? err.message : "Unknown error"}`
-      );
-      setStreaming(false);
+      // AbortError means user stopped the stream — don't show error
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setStreaming(false);
+        setAbortController(null);
+      } else {
+        appendToLastMessage(
+          convId!,
+          `\n\n**Error:** ${err instanceof Error ? err.message : "Unknown error"}`
+        );
+        setStreaming(false);
+        setAbortController(null);
+      }
     }
-  }, [activeConversationId, isStreaming, apiKey, createConversation, addMessage, appendToLastMessage, setStreaming, STR.pleaseSetApiKeyFirst]);
+  }, [activeConversationId, isStreaming, apiKey, createConversation, addMessage, appendToLastMessage, setStreaming, setAbortController, stopStreaming, STR.pleaseSetApiKeyFirst]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -222,13 +244,14 @@ export function ChatView() {
                   disabled={isStreaming}
                 />
                 <Button
-                  onClick={handleSend}
+                  onClick={isStreaming ? handleStop : handleSend}
                   disabled={isStreaming}
                   size="icon"
                   className="shrink-0"
+                  title={isStreaming ? "Stop streaming" : "Send"}
                 >
                   {isStreaming ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Square className="h-4 w-4" />
                   ) : (
                     <Send className="h-4 w-4" />
                   )}

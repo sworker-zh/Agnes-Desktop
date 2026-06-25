@@ -41,7 +41,7 @@ export async function sendChat(
 /** Send a streaming chat completion request — returns the raw Response */
 export async function sendChatStream(
   messages: ChatMessage[],
-  options?: { temperature?: number; max_tokens?: number }
+  options?: { temperature?: number; max_tokens?: number; signal?: AbortSignal }
 ): Promise<Response> {
   const body: ChatRequest = {
     model: MODEL,
@@ -55,6 +55,7 @@ export async function sendChatStream(
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(body),
+    signal: options?.signal,
   });
 
   if (!res.ok) {

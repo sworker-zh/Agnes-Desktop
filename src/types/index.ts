@@ -101,6 +101,8 @@ export interface VideoTaskResponse {
   created_at: number;
   seconds: string;
   size: string;
+  /** Direct download URL for the completed video (OpenAI-compatible) */
+  output_url?: string;
 }
 
 export interface VideoResultResponse {
@@ -112,6 +114,11 @@ export interface VideoResultResponse {
   progress: number;
   seconds: string;
   size: string;
+  /** Direct download URL for the completed video (OpenAI-compatible field) */
+  output_url?: string;
+  /** Alternative field name used by some API versions */
+  video_url?: string;
+  /** Legacy: holds the video download URL when status is completed */
   remixed_from_video_id: string | null;
   error: string | null;
 }

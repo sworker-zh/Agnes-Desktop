@@ -2,7 +2,7 @@
 // Video View — Text-to-Video, Image-to-Video, Multi-Image Video
 // ============================================================
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,28 +49,34 @@ export function VideoView() {
   const apiKey = useSettingsStore((s) => s.apiKey);
   const savePath = useSettingsStore((s) => s.savePath);
 
-  // Translated UI strings
-  const STR = {
-    title: t("video.title"),
-    describeVideo: t("video.describeVideo"),
-    imagePlaceholder: t("video.imagePlaceholder"),
-    duration: t("video.duration"),
-    generateVideo: t("video.generateVideo"),
-    creatingTask: t("video.creatingTask"),
-    modelInfo: t("video.modelInfo", { model: "agnes-video-v2.0" }),
-    asyncInfo: t("video.asyncInfo"),
-    videoTasks: t("video.videoTasks", { count: String(videos.length) }),
-    noVideoTasksYet: t("video.noVideoTasksYet"),
-    pleaseSetApiKeyFirst: t("video.pleaseSetApiKeyFirst"),
-    videoCreationFailed: t("video.videoCreationFailed"),
-    saved: t("common.saved"),
-  };
-  const STATUS_LABEL: Record<string, string> = {
-    completed: t("common.completed"),
-    failed: t("common.failed"),
-    in_progress: t("common.inProgress"),
-    queued: t("common.queued"),
-  };
+  // Translated UI strings — memoized to avoid recreating on every render
+  const STR = useMemo(
+    () => ({
+      title: t("video.title"),
+      describeVideo: t("video.describeVideo"),
+      imagePlaceholder: t("video.imagePlaceholder"),
+      duration: t("video.duration"),
+      generateVideo: t("video.generateVideo"),
+      creatingTask: t("video.creatingTask"),
+      modelInfo: t("video.modelInfo", { model: "agnes-video-v2.0" }),
+      asyncInfo: t("video.asyncInfo"),
+      videoTasks: t("video.videoTasks", { count: String(videos.length) }),
+      noVideoTasksYet: t("video.noVideoTasksYet"),
+      pleaseSetApiKeyFirst: t("video.pleaseSetApiKeyFirst"),
+      videoCreationFailed: t("video.videoCreationFailed"),
+      saved: t("common.saved"),
+    }),
+    [videos.length]
+  );
+  const STATUS_LABEL = useMemo(
+    () => ({
+      completed: t("common.completed"),
+      failed: t("common.failed"),
+      in_progress: t("common.inProgress"),
+      queued: t("common.queued"),
+    }),
+    []
+  );
 
   const [prompt, setPrompt] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -119,14 +125,15 @@ export function VideoView() {
 
       setCreating(false);
 
-      // Start polling
+      // Start polling — query by video_id
       const stopPoll = pollVideoResult(
         task.video_id,
         (result) => {
           updateVideoProgress(videoId, result.progress, result.status);
         },
         async (result) => {
-          const videoUrl = result.remixed_from_video_id;
+          // Prefer output_url (OpenAI-compatible), fall back to remixed_from_video_id (legacy field that holds the download URL).
+          const videoUrl = result.output_url || result.video_url || result.remixed_from_video_id;
           if (videoUrl) {
             completeVideo(videoId, videoUrl);
             // Auto-download
@@ -135,9 +142,11 @@ export function VideoView() {
               const filename = generateFilename("agnes_vid", "mp4");
               const localPath = await downloadFile(videoUrl, `${dir}/${filename}`);
               completeVideo(videoId, videoUrl, localPath);
-            } catch {
-              // Download failed but video URL is available
+            } catch (err) {
+              console.error("[VideoView] download failed:", err);
             }
+          } else {
+            console.warn("[VideoView] completed but no download URL in result:", JSON.stringify(result));
           }
         },
         (error) => {

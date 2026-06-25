@@ -97,7 +97,7 @@ export async function createMultiImageVideo(
   return res.json();
 }
 
-/** Query video result by video_id (recommended) */
+/** Query video result by video_id */
 export async function queryVideoResult(
   videoId: string
 ): Promise<VideoResultResponse> {
@@ -136,6 +136,8 @@ export function pollVideoResult(
       onUpdate(result);
 
       if (result.status === "completed") {
+        // Debug: log the raw result to check if video_url is present
+        console.log("[pollVideoResult] completed:", JSON.stringify(result, null, 2));
         onComplete(result);
         return;
       }

@@ -8,7 +8,20 @@ async fn download_file(url: String, save_path: String) -> Result<String, String>
     if !response.status().is_success() {
         return Err(format!("HTTP error: {}", response.status()));
     }
+
+    let content_type = response.headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .map(|v| v.to_str().unwrap_or("unknown").to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
+    log::info!(
+        "Downloaded {}: content-type={}, size={} bytes (first 32: {:?})",
+        save_path,
+        content_type,
+        bytes.len(),
+        &bytes[..bytes.len().min(32)]
+    );
 
     // Ensure parent directory exists
     if let Some(parent) = Path::new(&save_path).parent() {
@@ -58,8 +71,14 @@ async fn save_base64_image(data: String, filename: String, dir: String) -> Resul
 /// Get the default downloads directory for the current user
 #[tauri::command]
 async fn get_default_download_dir() -> Result<String, String> {
-    let home = std::env::var("USERPROFILE").map_err(|_| "Cannot get USERPROFILE")?;
-    let download_dir = Path::new(&home).join("Downloads").join("AgnesAI");
+    let download_dir = dirs::download_dir().unwrap_or_else(|| {
+        // Fallback: try USERPROFILE (Windows) or HOME (Unix), then use "."
+        std::env::var("USERPROFILE")
+            .ok()
+            .or_else(|| std::env::var("HOME").ok())
+            .map(|home| Path::new(&home).join("Downloads").join("AgnesAI"))
+            .unwrap_or_else(|| Path::new(".").join("AgnesAI").to_path_buf())
+    });
 
     // Create if not exists
     tokio::fs::create_dir_all(&download_dir)
