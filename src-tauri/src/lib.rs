@@ -90,6 +90,17 @@ async fn get_default_download_dir() -> Result<String, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // WebKitGTK fails to paint on some Linux GPU/driver combos: the window opens
+    // and the UI stays interactive, but the content renders blank/white. Disabling
+    // the accelerated compositing path forces a reliable render path and fixes it.
+    // Windows (WebView2) and macOS are unaffected — Linux-only. If a less
+    // aggressive var also works (e.g. WEBKIT_DISABLE_DMABUF_RENDERER=1), prefer it.
+    // (Edition 2021: set_var is safe; wrap in unsafe {} if bumping to edition 2024.)
+    #[cfg(target_os = "linux")]
+    {
+        std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_fs::init())
