@@ -1,0 +1,82 @@
+{
+  "nav": {
+    "chat": "聊天",
+    "image": "图像",
+    "video": "视频",
+    "settings": "设置"
+  },
+  "layout": {
+    "appName": "Agnes AI 工具"
+  },
+  "chat": {
+    "newChat": "新对话",
+    "startNewConversation": "开始新的对话",
+    "clickNewChatBegin": "点击 \"新对话\" 开始",
+    "typeAMessage": "输入消息...（Enter 发送，Shift+Enter 换行）",
+    "pleaseSetApiKeyFirst": "请先在设置中配置 API Key。"
+  },
+  "image": {
+    "title": "图像生成",
+    "textToImage": "文字 → 图像",
+    "imageToImage": "图像 → 图像",
+    "describeImage": "描述你想要生成的图像...",
+    "upload": "上传",
+    "url": "链接",
+    "clickToUploadImage": "点击上传图片",
+    "supportedFormats": "PNG、JPG、WebP（最大 20MB）",
+    "inputImagePlaceholder": "输入图片 URL（公开可访问）",
+    "sizePlaceholder": "尺寸（如 1024x768）",
+    "generateImage": "生成图像",
+    "generating": "生成中...",
+    "modelInfo": "模型：{{model}}",
+    "autoDownloadInfo": "图像会自动下载到本地磁盘。",
+    "generatedImages": "已生成图像（{{count}}）",
+    "noImagesYet": "尚未生成任何图像",
+    "pleaseUploadImage": "请上传图片或提供图片链接。",
+    "imageGenerationFailed": "图像生成失败"
+  },
+  "video": {
+    "title": "视频生成",
+    "describeVideo": "描述你想要生成的视频...",
+    "imagePlaceholder": "图片 URL（可选，用于图生视频）",
+    "duration": "时长",
+    "generateVideo": "生成视频",
+    "creatingTask": "创建任务中...",
+    "modelInfo": "模型：{{model}}",
+    "asyncInfo": "视频生成是异步的，完成后将自动下载。",
+    "videoTasks": "视频任务（{{count}}）",
+    "noVideoTasksYet": "暂无视频任务",
+    "pleaseSetApiKeyFirst": "请先在设置中配置 API Key。",
+    "videoCreationFailed": "视频创建失败"
+  },
+  "settings": {
+    "title": "设置",
+    "apiKey": "API Key",
+    "apiKeyDesc": "您的 Agnes AI API Key。从 {{link}} 获取。",
+    "apiKeyConsole": "Agnes AI 控制台",
+    "save": "保存",
+    "keyConfigured": "已配置",
+    "downloadPath": "下载路径",
+    "downloadPathDesc": "生成的图像和视频将保存到此目录。",
+    "downloadPathPlaceholder": "留空则使用默认路径 (~/Downloads/AgnesAI)",
+    "default": "默认",
+    "failedToGetDefaultDir": "获取默认下载目录失败。",
+    "theme": "主题",
+    "light": "浅色",
+    "dark": "深色",
+    "language": "语言",
+    "english": "English",
+    "chinese": "中文",
+    "about": "关于",
+    "poweredBy": "由 {{link}} 驱动",
+    "agnesAiLink": "Agnes AI",
+    "models": "模型：{{models}}"
+  },
+  "common": {
+    "saved": "已保存",
+    "completed": "已完成",
+    "failed": "已失败",
+    "inProgress": "进行中",
+    "queued": "排队中"
+  }
+}
