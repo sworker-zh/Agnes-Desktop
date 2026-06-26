@@ -36,8 +36,10 @@
     "android": {
       "debugApplicationIdSuffix": ".debug"
     },
-    "deb": {
-      "depends": ["libwebkit2gtk-4.1-0"]
+    "linux": {
+      "deb": {
+        "depends": ["libwebkit2gtk-4.1-0"]
+      }
     }
   }
 }
